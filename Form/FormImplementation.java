@@ -37,7 +37,8 @@ class Form{
         this.button = new JButton(s);
         this.button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e){
-                JOptionPane.showMessageDialog(new JFrame(), "Submitted");
+                Input input = new Input();
+                
             }
         });
         this.panel.add(this.button);
@@ -47,7 +48,14 @@ class Form{
     public JPanel getForm(){
         return this.panel;
     }
-    
+}
+
+class Input{
+
+
+    Input(){
+
+    }
 }
 
 
