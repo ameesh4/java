@@ -1,5 +1,6 @@
 import javax.swing.*;
-
+import java.sql.*;
+import java.util.ArrayList;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -8,10 +9,11 @@ import java.awt.event.ActionListener;
 class Form{
     JLabel label;
     JPanel panel;
-    JTextField tField;
+    protected ArrayList<JTextField> tField = new ArrayList<JTextField>();
     JButton button;
+    static int i = 0;
 
-    Form(JPanel panel, int row, int column){
+    public void setPanel(JPanel panel, int row, int column){
         panel.setLayout(new GridLayout(row, column));
         this.panel = panel;
     }
@@ -28,19 +30,16 @@ class Form{
     }
 
     public Form addtField(){
-        this.tField = new JTextField();
-        this.panel.add(this.tField);
+        JTextField txtField = new JTextField();
+        // tField = new JTextField[]
+        this.panel.add(txtField);
+        this.tField.add(txtField);
         return this;
     }
 
-    public Form addButton(String s){
+    public Form addButton(String s, ActionListener e){
         this.button = new JButton(s);
-        this.button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e){
-                Input input = new Input();
-                
-            }
-        });
+        this.button.addActionListener(e);
         this.panel.add(this.button);
         return this;
     }
@@ -50,25 +49,85 @@ class Form{
     }
 }
 
-class Input{
-
-
-    Input(){
-
+class DBForm extends Form{
+    public boolean write(){
+        Connection connection = null;
+        try{
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/formjava", "root", "Amish.com234");
+            PreparedStatement preStmt;
+            String s = "INSERT INTO form(FirstName, LastName, EmailAddress, PhoneNumber, DateOfBirth, Gender, Country, localaddress, City, PostalCode) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+            preStmt = connection.prepareStatement(s);
+            for (int i = 0; i < 10; i++){
+                preStmt.setString(i + 1, tField.get(i).getText());
+            }
+            preStmt.executeUpdate();
+            // connection.commit();
+        }
+        // catch(ClassNotFoundException e){
+        //     System.out.println(e);
+        //     return false;
+        // }
+        catch(SQLException e){
+            System.out.println(e);
+            return false;
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return false;
+        }
+        finally{
+            try{
+                connection.close();
+            }
+            catch(SQLException e){
+                System.out.println(e);
+            }
+            catch(NullPointerException e){
+                System.out.println(e);
+            }
+        }
+        return true;
     }
 }
 
-
-public class FormImplementation {
+public class FormImplementation{
+    
     public static void main(String[] args) {
-        Form form = new Form(new JPanel(), 4, 2);
-        form.addLabel("Name")
+        DBForm form = new DBForm();
+        form.setPanel(new JPanel(), 12, 2);
+        form.addLabel("First Name:")
             .addtField()
-            .addLabel("Roll")
+            .addLabel("Last Name:")
             .addtField()
-            .addLabel("Class")
+            .addLabel("Email Address:")
             .addtField()
-            .addButton("Submit");
+            // .addLabel("Country code:")
+            // .addtField()
+            .addLabel("Phone Number:")
+            .addtField()
+            .addLabel("Date Of Birth:")
+            .addtField()
+            .addLabel("Gender:")
+            .addtField()
+            .addLabel("Country:")
+            .addtField()
+            .addLabel("Local Address:")
+            .addtField()
+            .addLabel("City:")
+            .addtField()
+            .addLabel("Postal Code:")
+            .addtField()
+            .addButton("Submit", new ActionListener() {
+                public void actionPerformed(ActionEvent e){
+                    if(form.write()){
+                        System.out.println("Successfully Inserted data");
+                    }
+                    else{
+                        System.out.println("Error Inserting Data");
+                    }
+                }
+            });
 
         JFrame frame = new JFrame();
         frame.setSize(400, 300);
