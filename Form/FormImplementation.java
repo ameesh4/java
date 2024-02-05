@@ -5,13 +5,15 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 class Form{
-    JLabel label;
+    protected ArrayList<JLabel> label = new ArrayList<JLabel>();
     JPanel panel;
     protected ArrayList<JTextField> tField = new ArrayList<JTextField>();
     JButton button;
-    static int i = 0;
+    ResultSet rset;
 
     public void setPanel(JPanel panel, int row, int column){
         panel.setLayout(new GridLayout(row, column));
@@ -19,19 +21,23 @@ class Form{
     }
 
     public Form addLabel(String s){
-        this.label = new JLabel(s);
-        this.panel.add(this.label);
-        return this;
-    }
-
-    public Form addLabel(){
-        this.label = new JLabel();
+        JLabel label1 = new JLabel(s);
+        this.label.add(label1);
+        this.panel.add(label1);
         return this;
     }
 
     public Form addtField(){
         JTextField txtField = new JTextField();
         // tField = new JTextField[]
+        this.panel.add(txtField);
+        this.tField.add(txtField);
+        return this;
+    }
+
+    public Form addtField(KeyListener e){
+        JTextField txtField = new JTextField();
+        txtField.addKeyListener(e);
         this.panel.add(txtField);
         this.tField.add(txtField);
         return this;
@@ -50,27 +56,29 @@ class Form{
 }
 
 class DBForm extends Form{
-    public boolean write(){
-        Connection connection = null;
+    Connection connection = null;
+    PreparedStatement preStmt;
+
+    public DBForm(){
         try{
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/formjava", "root", "Amish.com234");
-            PreparedStatement preStmt;
-            String s = "INSERT INTO form(FirstName, LastName, EmailAddress, PhoneNumber, DateOfBirth, Gender, Country, localaddress, City, PostalCode) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+            this.connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/formjava", "root", "Amish.com234");
+        }catch(ClassNotFoundException e){
+            System.out.println(e);
+        }catch(SQLException e){
+            System.out.println(e);
+        }
+        
+    }
+
+    public boolean write(){
+        try{
+            String s = "INSERT INTO form(FirstName, LastName, EmailAddress, Country, PhoneNumber, DateOfBirth, Gender, localaddress, City, PostalCode) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
             preStmt = connection.prepareStatement(s);
             for (int i = 0; i < 10; i++){
                 preStmt.setString(i + 1, tField.get(i).getText());
             }
             preStmt.executeUpdate();
-            // connection.commit();
-        }
-        // catch(ClassNotFoundException e){
-        //     System.out.println(e);
-        //     return false;
-        // }
-        catch(SQLException e){
-            System.out.println(e);
-            return false;
         }
         catch(Exception e){
             System.out.println(e);
@@ -89,6 +97,29 @@ class DBForm extends Form{
         }
         return true;
     }
+
+    public String getCountryCode(){
+        String query = "select countryCode from countryId where country=?;";
+        String result = "";
+        try{
+            preStmt = connection.prepareStatement(query);
+            preStmt.setString(1, tField.get(3).getText());
+            rset = preStmt.executeQuery();
+        }catch(SQLException e){
+            System.out.println(e);
+        }
+        
+        try{
+            result = rset.getString(1);
+        }catch(SQLException e){
+            System.out.println(e);
+        }
+        return result;
+    }
+
+    public void setCountryCode(){
+        label.get(5).setText("+"+getCountryCode());
+    }
 }
 
 public class FormImplementation{
@@ -102,15 +133,22 @@ public class FormImplementation{
             .addtField()
             .addLabel("Email Address:")
             .addtField()
-            // .addLabel("Country code:")
-            // .addtField()
+            .addLabel("Country:")
+            .addtField(new KeyListener() {
+                public void keyPressed(KeyEvent e){
+                    form.setCountryCode();
+                }
+                public void keyReleased(KeyEvent e){}
+                public void keyTyped(KeyEvent e){
+                }
+            })
+            .addLabel("Country code:")
+            .addLabel("")
             .addLabel("Phone Number:")
             .addtField()
             .addLabel("Date Of Birth:")
             .addtField()
             .addLabel("Gender:")
-            .addtField()
-            .addLabel("Country:")
             .addtField()
             .addLabel("Local Address:")
             .addtField()
