@@ -3,6 +3,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class School extends JFrame {
     private JPanel panel;
@@ -14,8 +15,6 @@ class School extends JFrame {
     private ButtonGroup bg = new ButtonGroup();
     private JComboBox comboBox;
     private String[] comboboxlist;
-
-
 
     public School(){
 //        this.add(this.panel);
@@ -80,6 +79,14 @@ class School extends JFrame {
         return this;
     }
 
+    public School addtField(int width, int height){
+        JTextField txtField = new JTextField();
+        txtField.setPreferredSize(new Dimension(width, height));
+        panel.add(txtField);
+        tField.add(txtField);
+        return this;
+    }
+
     public School addRadioButton(String s){
         JRadioButton rButton = new JRadioButton(s);
         bg.add(rButton);
@@ -95,9 +102,10 @@ class School extends JFrame {
         return this;
     }
 
-    public School addComboBox(String[] s){
-        comboBox = new JComboBox(s);
-        this.comboboxlist = s;
+    public School addComboBox(ArrayList<String> s){
+        s.add(0, "Select");
+        Object[] comboboxlist = s.toArray();
+        comboBox = new JComboBox(comboboxlist);
         panel.add(comboBox);
         return this;
     }
@@ -185,13 +193,36 @@ class Students{
 }
 
 class SchoolManagement{
-    static void Refresh(ArrayList<JLabel> label, int startindex, int difference, int getIndex, ArrayList<Students> studentlist){
+    static int j = 0;
+
+    static void Refresh(ArrayList<JLabel> label, int startindex, int difference, ArrayList<Students> studentlist, int moveindex) throws Exception{
+        if (moveindex == 1){
+            j++;
+        }else if(moveindex == 0){
+            j = 0;
+        }
+        else if (moveindex == -1){
+            j--;
+        }
+        else{
+            throw new IllegalArgumentException("Invalid move index");
+        }
+
+        if(j < 0){
+            j = 0;
+            throw new Exception("No more records");
+        }
+        else if (j >= studentlist.size()){
+            j = studentlist.size() - 1;
+            throw new Exception("No more records");
+        }
+
         int i = startindex;
-        label.get(i).setText(studentlist.get(getIndex).getStudentId());
-        label.get(i + difference).setText(studentlist.get(getIndex).getStudentName());
-        label.get(i + difference * 2).setText(studentlist.get(getIndex).getGender());
-        label.get(i + difference * 3).setText(studentlist.get(getIndex).getCourse());
-        label.get(i + difference * 4).setText(studentlist.get(getIndex).getDepartment());
+        label.get(i).setText(studentlist.get(j).getStudentId());
+        label.get(i + difference).setText(studentlist.get(j).getStudentName());
+        label.get(i + difference * 2).setText(studentlist.get(j).getGender());
+        label.get(i + difference * 3).setText(studentlist.get(j).getCourse());
+        label.get(i + difference * 4).setText(studentlist.get(j).getDepartment());
     }
     public static void main(String[] args) {
         School school = new School();
@@ -204,12 +235,12 @@ class SchoolManagement{
 
         studentform.addPanel(new GridLayout(8, 2), BorderLayout.CENTER)
                 .addLabel("Student ID:")
-                .addtField()
+                .addtField(100, 10)
                 .addLabel("Student Name:")
                 .addtField()
                 .addLabel("Gender:")
-                .addRadioButton("Male")
                 .addLabel("")
+                .addRadioButton("Male")
                 .addRadioButton("Female")
                 .addLabel("Course:")
                 .addCheckBox("Physics")
@@ -218,7 +249,8 @@ class SchoolManagement{
                 .addLabel("")
                 .addCheckBox("Mathematics")
                 .addLabel("Department:")
-                .addComboBox(new String[]{"Science", "Commerce", "Arts"});
+                .addComboBox(new ArrayList<String>(Arrays.asList("Science", "Arts", "Commerce")));
+
 
         studentform.addPanel(new FlowLayout(), BorderLayout.SOUTH)
                 .addButton("Back", (ActionEvent e) -> {
@@ -243,45 +275,47 @@ class SchoolManagement{
                         }
 
                     } catch (Exception exception) {
-                        JOptionPane error = new JOptionPane();
-                        error.showMessageDialog(studentform, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-
-                    String course = "";
-                    for (JCheckBox checkBox : checkBoxes) {
-                        if (checkBox.isSelected()) {
-                            course += checkBox.getText() + " ";
+                        JOptionPane.showMessageDialog(studentform, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    } finally{
+                        String course = "";
+                        for (JCheckBox checkBox : checkBoxes) {
+                            if (checkBox.isSelected()) {
+                                course += checkBox.getText() + " ";
+                            }
                         }
-                    }
-                    if(course == ""){
-                        JOptionPane error = new JOptionPane();
-                        error.showMessageDialog(studentform, "Please select a course", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                        if(course == ""){
+                            JOptionPane.showMessageDialog(studentform, "Please select a course", "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
 
-                    student.setCourse(course);
+                        student.setCourse(course);
 
-                    student.setDepartment(comboBox.getSelectedItem().toString());
-                    studentlist.add(student);
+                        student.setDepartment(comboBox.getSelectedItem().toString());
+                        studentlist.add(student);
+                        JOptionPane.showMessageDialog(studentform, "Student Registered Successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    }
                 });
 
         School view = new School();
-        int i = 0;
         ArrayList<JLabel> label =  view.getLabel();
+
         view.addPanel(new BorderLayout(), BorderLayout.NORTH).addLabel("Students");
         view.addPanel(new FlowLayout(), BorderLayout.NORTH)
+                .addButton("Previous", (ActionEvent e)->{
+                    try{
+                        Refresh(label, 4, 2, studentlist, -1);
+                    }catch (Exception exception){
+                        JOptionPane.showMessageDialog(view, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                })
                 .addButton("Next", (ActionEvent e)->{
-                    int j = 0;
-                    if(j < studentlist.size() - 1){
-                        j++;
+                    try{
+                        Refresh(label, 4, 2, studentlist, 1);
+                    }catch (Exception exception){
+                        JOptionPane.showMessageDialog(view, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                    if (studentlist.size() <= 0){
-                        JOptionPane error = new JOptionPane();
-                        error.showMessageDialog(view, "No students to display", "Error", JOptionPane.ERROR_MESSAGE);
-                    }else {
-                        Refresh(label, 4, 2, j, studentlist);
-                    }
-
                 });
+
         view.addPanel(new BorderLayout(), BorderLayout.WEST).addLabel("      ");
         view.addPanel(new BorderLayout(), BorderLayout.EAST).addLabel("      ");
 
@@ -300,7 +334,11 @@ class SchoolManagement{
 
         view.addPanel(new FlowLayout(), BorderLayout.SOUTH)
                 .addButton("Refresh", (ActionEvent e) -> {
-                    Refresh(label, 4, 2, 0, studentlist);
+                    try{
+                        Refresh(label, 4, 2, studentlist, 0);
+                    }catch (Exception exception){
+                        JOptionPane.showMessageDialog(view, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 })
                 .addButton("Back", (ActionEvent e) -> {
                     view.setVisibility(false);

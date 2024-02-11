@@ -48,6 +48,11 @@ class SavingsAccount extends BankAccount{
         double interest = getBalance() * interestRate / 100;
         super.deposit(interest);
     }
+
+    @Override
+    public void displayBalance(){
+        System.out.println("Account balance: " + getBalance() + " Interest rate: " + interestRate);
+    }
 }
 
 class CheckingAccount extends BankAccount{
@@ -67,6 +72,7 @@ class CheckingAccount extends BankAccount{
         }
     }
 
+    @Override
     public void displayBalance(){
         System.out.println("Account balance: " + getBalance() + " Overdraft: " + overdraft);
     }
@@ -78,11 +84,11 @@ class Banks{
         account.deposit(500);
         account.withdraw(200);
         account.displayBalance();
-
+        System.out.println("=====================================");
         SavingsAccount savings = new SavingsAccount("Jane Doe", 2000, 5);
         savings.addInterest();
         savings.displayBalance();
-
+        System.out.println("=====================================");
         CheckingAccount checking = new CheckingAccount("John Smith", 1000, 500);
         checking.withdraw(2000);
         checking.displayBalance();
